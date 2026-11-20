@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ai-link-analysis
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # set the value in the Render dashboard
+      - key: LLM_MODEL
+        value: claude-opus-5-5
+      - key: LLM_FALLBACK_MODEL
+        value: claude-sonnet-5-5
+      - key: LLM_EFFORT
+        value: low
