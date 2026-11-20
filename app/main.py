@@ -22,8 +22,11 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 logger = logging.getLogger("app")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def init_state(app: FastAPI) -> None:
+    """Create shared clients once. Called from lifespan, and lazily on the first
+    request for serverless runtimes (e.g. Vercel) that may skip lifespan events."""
+    if getattr(app.state, "http_client", None) is not None:
+        return
     settings = get_settings()
     app.state.http_client = httpx.AsyncClient(
         timeout=settings.fetch_timeout_seconds,
@@ -34,8 +37,14 @@ async def lifespan(app: FastAPI):
     app.state.cache = TTLCache(settings.cache_ttl_seconds, settings.cache_max_entries)
     if not settings.anthropic_api_key:
         logger.warning("ANTHROPIC_API_KEY is not set – /link-analysis will return LLM_NOT_CONFIGURED")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_state(app)
     yield
     await app.state.http_client.aclose()
+    app.state.http_client = None
 
 
 app = FastAPI(
@@ -74,6 +83,7 @@ async def unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
 
 
 def get_analysis_service(request: Request, settings: Settings = Depends(get_settings)) -> AnalysisService:
+    init_state(request.app)
     state = request.app.state
     return AnalysisService(settings, state.http_client, state.llm, state.cache)
 

@@ -8,6 +8,8 @@ A FastAPI service that takes a website URL, fetches and cleans the site's conten
 4. **Top 5 services**: each labelled as found on the website or inferred
 5. **Target audience**: primary and secondary audiences, industries, profiles, needs, segments
 
+**Live demo:** https://ai-link-analysis-psi.vercel.app/docs (Swagger UI) · health check: https://ai-link-analysis-psi.vercel.app/health
+
 ```
 POST http://localhost:4000/link-analysis   {"url": "https://example.com"}
 ```
@@ -329,7 +331,16 @@ Further options for production scale:
 
 ## Deployment
 
-The repo includes a `Dockerfile` (it reads `$PORT`, default 4000) and a `render.yaml`.
+**Live deployment (Vercel):** https://ai-link-analysis-psi.vercel.app/docs
+
+Vercel detects the FastAPI app in `app/main.py` automatically. Shared clients are created lazily on the first request, so serverless cold starts work without lifespan events.
+
+```bash
+vercel deploy --prod
+vercel env add ANTHROPIC_API_KEY production   # the key is never committed
+```
+
+The repo also includes a `Dockerfile` (it reads `$PORT`, default 4000) and a `render.yaml` for container hosts.
 
 **Render (free tier):**
 1. Push the repo to GitHub, then in Render choose **New → Blueprint** and select the repo.
